@@ -1,6 +1,6 @@
-from flask import Flask, request, render_template_string, session
+from flask import Flask, request, render_template_string, render_template, session
 from valor_random import numero_random
-from FuncionTerminarManual import terminar_juego  # importamos la función
+from FuncionTerminarManual import terminar_juego  # Función externa
 
 app = Flask(__name__)
 app.secret_key = "supersecreto123"
@@ -9,16 +9,23 @@ app.secret_key = "supersecreto123"
 def home():
     mensaje = ""
 
-    # Inicializar contador de intentos
+    # Inicializar variables de sesión
+    if 'aciertos' not in session:
+        session['aciertos'] = 0
+    if 'fallos' not in session:
+        session['fallos'] = 0
+    if 'numero_generado' not in session:
+        session['numero_generado'] = numero_random()
     if 'intentos' not in session:
         session['intentos'] = 0
 
     if request.method == 'POST':
-        input_value = request.form.get('numero', '').strip()
+        entrada = request.form.get('numero', '').strip()
 
-        # Llamar a la función externa para terminar el juego
-        resultado = terminar_juego(input_value)
+        # Verificar si el usuario quiere terminar el juego
+        resultado = terminar_juego(entrada, session.get('intentos', 0))
         if resultado.get("terminado"):
+            # El usuario escribió "terminar juego"
             despedida_html = f"""
             <!DOCTYPE html>
             <html lang="es">
@@ -39,28 +46,42 @@ def home():
             </body>
             </html>
             """
+            session.clear()
             return despedida_html
 
-        # Si no termina, seguimos con la lógica normal
-        try:
-            numero_ingresado = int(input_value)
-            numero_generado = numero_random()  # generar número nuevo en cada intento
+        # Si no se terminó el juego, sigue la lógica normal
+        if entrada.isdigit():
+            numero_ingresado = int(entrada)
+            numero_generado = session['numero_generado']
             session['intentos'] += 1
 
             if numero_ingresado == numero_generado:
-                mensaje = f"🎉 ¡Ganaste! Tu número fue {numero_ingresado} y el número generado era {numero_generado}."
-            else:
-                mensaje = f"❌ No acertaste. Tu número fue {numero_ingresado}, y el número generado era {numero_generado}. Intenta de nuevo."
-        except ValueError:
-            mensaje = "⚠️ Por favor, ingresa un número válido o escribe 'terminar juego' para salir."
+                session['aciertos'] += 1
+                aciertos = session['aciertos']
+                fallos = session['fallos']
 
-    # HTML con contador en la esquina derecha superior
+                # Reiniciar todo para un nuevo juego
+                session['numero_generado'] = numero_random()
+                session['intentos'] = 0
+                session['aciertos'] = 0
+                session['fallos'] = 0
+
+                return render_template("felicidades.html", aciertos=aciertos, fallos=fallos)
+            else:
+                session['fallos'] += 1
+                mensaje = f"No acertaste. Tu número fue {numero_ingresado}, y el número era {numero_generado}. Intenta otra vez."
+                # Generamos nuevo número para el siguiente intento
+                session['numero_generado'] = numero_random()
+        else:
+            mensaje = "Ingresa un número válido o escribe 'terminar juego' para salir."
+
+    # HTML del juego principal
     html = """
     <!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>Adivina el número del 1 al 100 para ganar</title>
+        <title>Adivina el número del 1 al 100</title>
         <style>
             body { 
                 font-family: Arial; 
@@ -100,7 +121,7 @@ def home():
         </style>
     </head>
     <body>
-        <h1>Adivina el número del 1 al 100 para ganar</h1>
+        <h1>Adivina el número del 1 al 100</h1>
         <form method="POST">
             <input type="text" name="numero" placeholder="Ej: 25 o 'terminar juego'" required>
             <button type="submit">Adivinar número</button>
