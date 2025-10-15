@@ -1,8 +1,18 @@
-# Si el valor de 'number' es la frase de terminación, detenemos el juego.
-if isinstance(input_value, str) and input_value.lower().strip() == "terminar juego":
-    GAME_ACTIVE = False
-    return jsonify({
-        "feedback": f"<h1>Juego terminado por el usuario. El número secreto era {SECRET_NUMBER}. ¡Gracias por jugar!</h1>",
-        "game_status": "stopped",
-        "guesses_made": GUESS_COUNT
-    }), 200
+# FuncionTerminarManual.py
+from flask import session
+
+def terminar_juego(input_value):
+    """
+    Revisa si el usuario quiere terminar el juego.
+    Devuelve un diccionario con la info para mostrar y reinicia la sesión si se termina.
+    """
+    if isinstance(input_value, str) and input_value.lower().strip() == "terminar juego":
+        numero_final = session.get('numero_objetivo', None)
+        intentos = session.get('intentos', 0)
+        session.clear()  # reinicia la sesión
+        return {
+            "terminado": True,
+            "numero_final": numero_final,
+            "intentos": intentos
+        }
+    return {"terminado": False}
