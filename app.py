@@ -17,7 +17,7 @@ def home():
         input_value = request.form.get('numero', '').strip()
 
         # Llamar a la función externa para terminar el juego
-        resultado = terminar_juego(input_value)
+        resultado = terminar_juego(input_value, session.get('intentos', 0))
         if resultado.get("terminado"):
             despedida_html = f"""
             <!DOCTYPE html>
@@ -213,3 +213,4 @@ def resultado():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
