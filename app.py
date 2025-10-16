@@ -1,14 +1,22 @@
 from flask import Flask, request, render_template_string, session, redirect, url_for
 from valor_random import numero_random
+from FuncionTerminarManual import terminar_juego  # función externa para terminar juego
+from FuncionPuntaje import puntaje_total  # nueva función para el puntaje
 from FuncionTerminarManual import terminar_juego  # importamos la función
 
 app = Flask(__name__)
 app.secret_key = "supersecreto123"
 
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
     mensaje = ""
 
+    # Inicializar contador de intentos y puntaje
+    if 'intentos' not in session:
+        session['intentos'] = 0
+    if 'puntaje' not in session:
+        session['puntaje'] = 0
     # Inicializar contador de intentos
     if 'intentos' not in session:
         session['intentos'] = 0
@@ -65,6 +73,13 @@ def home():
 
             # --- LÓGICA DE GANAR / PERDER + DISTANCIAS ---
             if numero_ingresado == numero_generado:
+                # Calcular nuevo puntaje
+                session['puntaje'] = puntaje_total(session.get('puntaje', 0), numero_ingresado, numero_generado)
+
+                session['mensaje_final'] = (
+                    f"🎉 ¡Ganaste! Adivinaste el número {numero_generado} en "
+                    f"{session['intentos']} intentos. Puntaje total: {session['puntaje']} puntos."
+                )
                 session['mensaje_final'] = f"🎉 ¡Ganaste! Adivinaste el número {numero_generado} en {session['intentos']} intentos."
                 session['resultado'] = "ganado"
             else:
@@ -83,6 +98,10 @@ def home():
                     proximidad = ""
 
                 # Mensaje final de pérdida
+                session['mensaje_final'] = (
+                    f"😕 No acertaste. El número correcto era {numero_generado}. {proximidad} "
+                    f"Puntaje total: {session['puntaje']} puntos."
+                )
                 session['mensaje_final'] = f"😕 No acertaste. El número correcto era {numero_generado}. {proximidad}"
                 session['resultado'] = "perdido"
 
@@ -92,6 +111,7 @@ def home():
         except ValueError:
             mensaje = "⚠️ Por favor, ingresa un número válido o escribe 'terminar juego' para salir."
 
+    # HTML principal
     # HTML con contador
     html = """
     <!DOCTYPE html>
@@ -112,6 +132,7 @@ def home():
             }
             h1 { color:#333; }
             form { margin-top:20px; }
+            input[type=text] { padding:10px; font-size:16px; width:200px; border-radius:5px; border:1px solid #ccc; }
             input[type=text] { padding:10px; font-size:16px; width:160px; }
             button { 
                 padding:10px 15px; 
@@ -122,6 +143,9 @@ def home():
                 color:white; 
                 border:none; 
                 border-radius:4px; 
+                transition: 0.2s;
+            }
+            button:hover { background:#45a049; transform: scale(1.05); }
             }
             button:hover { background:#45a049; }
             p { margin-top:20px; font-weight:bold; }
@@ -129,6 +153,13 @@ def home():
                 position: absolute;
                 top: 20px;
                 right: 20px;
+                background: linear-gradient(135deg, #333, #555);
+                color: white;
+                padding: 10px 15px;
+                border-radius: 10px;
+                font-weight: bold;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                text-align: right;
                 background: #333;
                 color: white;
                 padding: 8px 12px;
@@ -147,11 +178,14 @@ def home():
             <p>{{ mensaje }}</p>
         {% endif %}
         <div class="contador">
+            <div>Intentos: {{ intentos }}</div>
+            <div style="margin-top:5px;">Puntaje: {{ puntaje }}</div>
             Intentos: {{ intentos }}
         </div>
     </body>
     </html>
     """
+    return render_template_string(html, mensaje=mensaje, intentos=session.get('intentos', 0), puntaje=session.get('puntaje', 0))
     return render_template_string(html, mensaje=mensaje, intentos=session.get('intentos', 0))
 
 
@@ -212,5 +246,6 @@ def resultado():
 
 
 if __name__ == '__main__':
+    app.run(debug=True)
     app.run(debug=True)
 
