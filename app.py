@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string, session
+from flask import Flask, request, render_template_string, session, redirect, url_for
 from valor_random import numero_random
 from FuncionTerminarManual import terminar_juego  # importamos la función
 
@@ -26,10 +26,26 @@ def home():
                 <meta charset="UTF-8">
                 <title>Juego terminado</title>
                 <style>
-                    body {{ font-family: Arial; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#f2f2f2; color:#333; }}
+                    body {{
+                        font-family: Arial;
+                        display:flex;
+                        flex-direction:column;
+                        align-items:center;
+                        justify-content:center;
+                        height:100vh;
+                        background:#f2f2f2;
+                        color:#333;
+                    }}
                     h1 {{ color:#c0392b; }}
                     p {{ font-size:18px; }}
-                    a {{ margin-top:20px; padding:10px 20px; background:#4CAF50; color:white; text-decoration:none; border-radius:4px; }}
+                    a {{
+                        margin-top:20px;
+                        padding:10px 20px;
+                        background:#4CAF50;
+                        color:white;
+                        text-decoration:none;
+                        border-radius:4px;
+                    }}
                 </style>
             </head>
             <body>
@@ -44,23 +60,45 @@ def home():
         # Si no termina, seguimos con la lógica normal
         try:
             numero_ingresado = int(input_value)
-            numero_generado = numero_random()  # generar número nuevo en cada intento
+            numero_generado = numero_random()
             session['intentos'] += 1
 
+            # --- LÓGICA DE GANAR / PERDER + DISTANCIAS ---
             if numero_ingresado == numero_generado:
-                mensaje = f"🎉 ¡Ganaste! Tu número fue {numero_ingresado} y el número generado era {numero_generado}."
+                session['mensaje_final'] = f"🎉 ¡Ganaste! Adivinaste el número {numero_generado} en {session['intentos']} intentos."
+                session['resultado'] = "ganado"
             else:
-                mensaje = f"❌ No acertaste. Tu número fue {numero_ingresado}, y el número generado era {numero_generado}. Intenta de nuevo."
+                diferencia = abs(numero_ingresado - numero_generado)
+
+                # Evaluar qué tan cerca estuvo el jugador
+                if 1 <= diferencia <= 9:
+                    proximidad = "🔥 ¡Muy cerca!"
+                elif 10 <= diferencia <= 19:
+                    proximidad = "🙂 ¡Cerca!"
+                elif 20 <= diferencia <= 31:
+                    proximidad = "😐 ¡Lejos!"
+                elif diferencia >= 32:
+                    proximidad = "🥶 ¡Muy lejos!"
+                else:
+                    proximidad = ""
+
+                # Mensaje final de pérdida
+                session['mensaje_final'] = f"😕 No acertaste. El número correcto era {numero_generado}. {proximidad}"
+                session['resultado'] = "perdido"
+
+            # Redirigir a la página de resultado
+            return redirect(url_for("resultado"))
+
         except ValueError:
             mensaje = "⚠️ Por favor, ingresa un número válido o escribe 'terminar juego' para salir."
 
-    # HTML con contador en la esquina derecha superior
+    # HTML con contador
     html = """
     <!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>Adivina el número del 1 al 100 para ganar</title>
+        <title>Adivina el número del 1 al 100</title>
         <style>
             body { 
                 font-family: Arial; 
@@ -100,8 +138,8 @@ def home():
         </style>
     </head>
     <body>
-        <h1>Adivina el número del 1 al 100 para ganar</h1>
-        <form method="POST">
+        <h1>🎯 Adivina el número del 1 al 100</h1>
+        <form method="POST" target="_blank">
             <input type="text" name="numero" placeholder="Ej: 25 o 'terminar juego'" required>
             <button type="submit">Adivinar número</button>
         </form>
@@ -115,6 +153,62 @@ def home():
     </html>
     """
     return render_template_string(html, mensaje=mensaje, intentos=session.get('intentos', 0))
+
+
+@app.route('/resultado')
+def resultado():
+    mensaje = session.get('mensaje_final', "Sin mensaje.")
+    estado = session.get('resultado', "neutro")
+
+    # Cambia color del fondo según resultado
+    if estado == "ganado":
+        fondo = "#b6f5c9"  # verde claro
+        titulo = "¡Victoria!"
+    elif estado == "perdido":
+        fondo = "#f8b6b6"  # rojo claro
+        titulo = "Intento fallido"
+    else:
+        fondo = "#eef2f3"
+        titulo = "Resultado del juego"
+
+    html_resultado = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>{titulo}</title>
+        <style>
+            body {{
+                font-family: Arial;
+                text-align: center;
+                background: {fondo};
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }}
+            h1 {{ color: #2c3e50; }}
+            p {{ font-size: 18px; color: #333; }}
+            a {{
+                margin-top: 20px;
+                padding: 10px 20px;
+                background: #4CAF50;
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+            }}
+            a:hover {{ background: #388e3c; }}
+        </style>
+    </head>
+    <body>
+        <h1>{titulo}</h1>
+        <p>{mensaje}</p>
+        <a href="/">Volver al inicio</a>
+    </body>
+    </html>
+    """
+    return html_resultado
 
 
 if __name__ == '__main__':
