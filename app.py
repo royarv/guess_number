@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string, session, redirect, url_for
+from flask import Flask, request, render_template_string,render_template, session, redirect, url_for
 from valor_random import numero_random
 from FuncionTerminarManual import terminar_juego  # función externa para terminar juego
 from FuncionPuntaje import puntaje_total  # nueva función para el puntaje
@@ -104,6 +104,11 @@ def home():
                 session['mensaje_final'] = f"No acertaste. El número correcto era {numero_generado}. {proximidad}"
                 session['resultado'] = "perdido"
 
+            #historial
+            historial=session.get('historial', [])
+            historial.append({"numero":numero_ingresado, "estado": session ['resultado']})
+            session['historial']=historial
+
             # Redirigir a la página de resultado
             return redirect(url_for("resultado"))
 
@@ -112,12 +117,14 @@ def home():
 
     # HTML principal
     # HTML con contador
+   
+
     html = """
     <!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>Adivina el número del 1 al 100</title>
+        <title>Adivina el numero del 1 al 100</title>
         <style>
             body { 
                 font-family: Arial; 
@@ -132,7 +139,6 @@ def home():
             h1 { color:#333; }
             form { margin-top:20px; }
             input[type=text] { padding:10px; font-size:16px; width:200px; border-radius:5px; border:1px solid #ccc; }
-            input[type=text] { padding:10px; font-size:16px; width:160px; }
             button { 
                 padding:10px 15px; 
                 font-size:16px; 
@@ -145,42 +151,47 @@ def home():
                 transition: 0.2s;
             }
             button:hover { background:#45a049; transform: scale(1.05); }
-            }
-            button:hover { background:#45a049; }
             p { margin-top:20px; font-weight:bold; }
             .contador {
                 position: absolute;
                 top: 20px;
                 right: 20px;
-                background: linear-gradient(135deg, #333, #555);
+                background: #333;
                 color: white;
                 padding: 10px 15px;
                 border-radius: 10px;
                 font-weight: bold;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                text-align: right;
-                background: #333;
+            }
+            .link-historial {
+                margin-top: 20px;
+                padding: 10px 15px;
+                background: #2196F3;
                 color: white;
-                padding: 8px 12px;
+                text-decoration: none;
                 border-radius: 5px;
-                font-weight: bold;
+            }
+            .link-historial:hover {
+                background: #1976D2;
             }
         </style>
     </head>
     <body>
-        <h1>Adivina el número del 1 al 100</h1>
-        <form method="POST" target="_blank">
+        <h1>Adivina el numero del 1 al 100</h1>
+        <form method="POST">
             <input type="text" name="numero" placeholder="Ej: 25 o 'terminar juego'" required>
-            <button type="submit">Adivinar número</button>
+            <button type="submit">Adivinar numero</button>
         </form>
+
         {% if mensaje %}
             <p>{{ mensaje }}</p>
         {% endif %}
+
         <div class="contador">
             <div>Intentos: {{ intentos }}</div>
             <div style="margin-top:5px;">Puntaje: {{ puntaje }}</div>
-                
         </div>
+
+        <a class="link-historial" href="{{ url_for('historial') }}">Ver historial</a>
     </body>
     </html>
     """
@@ -242,6 +253,10 @@ def resultado():
     </html>
     """
     return html_resultado
+@app.route('/historial')
+def historial ():
+    historial=session.get('historial', [])
+    return render_template('historial.html', historial=historial)
 
 
 if __name__ == '__main__':
