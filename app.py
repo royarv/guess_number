@@ -82,34 +82,33 @@ def home():
                 )
                 session['mensaje_final'] = f"🎉 ¡Ganaste! Adivinaste el número {numero_generado} en {session['intentos']} intentos."
                 session['resultado'] = "ganado"
+                #hecho por Solano Bravo Basilio Uriel
             else:
                 diferencia = abs(numero_ingresado - numero_generado)
-
-                # Evaluar qué tan cerca estuvo el jugador
                 if 1 <= diferencia <= 9:
-                    proximidad = "🔥 ¡Muy cerca!"
+                    proximidad = "¡Muy cerca!"
                 elif 10 <= diferencia <= 19:
-                    proximidad = "🙂 ¡Cerca!"
+                    proximidad = "¡Cerca!"
                 elif 20 <= diferencia <= 31:
-                    proximidad = "😐 ¡Lejos!"
+                    proximidad = "¡Lejos!"
                 elif diferencia >= 32:
-                    proximidad = "🥶 ¡Muy lejos!"
+                    proximidad = "¡Muy lejos!"
                 else:
                     proximidad = ""
 
                 # Mensaje final de pérdida
                 session['mensaje_final'] = (
-                    f"😕 No acertaste. El número correcto era {numero_generado}. {proximidad} "
+                    f"No acertaste. El número correcto era {numero_generado}. {proximidad} "
                     f"Puntaje total: {session['puntaje']} puntos."
                 )
-                session['mensaje_final'] = f"😕 No acertaste. El número correcto era {numero_generado}. {proximidad}"
+                session['mensaje_final'] = f"No acertaste. El número correcto era {numero_generado}. {proximidad}"
                 session['resultado'] = "perdido"
 
             # Redirigir a la página de resultado
             return redirect(url_for("resultado"))
 
         except ValueError:
-            mensaje = "⚠️ Por favor, ingresa un número válido o escribe 'terminar juego' para salir."
+            mensaje = "Por favor, ingresa un número valido o escribe 'terminar juego' para salir."
 
     # HTML principal
     # HTML con contador
@@ -169,7 +168,7 @@ def home():
         </style>
     </head>
     <body>
-        <h1>🎯 Adivina el número del 1 al 100</h1>
+        <h1>Adivina el número del 1 al 100</h1>
         <form method="POST" target="_blank">
             <input type="text" name="numero" placeholder="Ej: 25 o 'terminar juego'" required>
             <button type="submit">Adivinar número</button>
@@ -180,7 +179,7 @@ def home():
         <div class="contador">
             <div>Intentos: {{ intentos }}</div>
             <div style="margin-top:5px;">Puntaje: {{ puntaje }}</div>
-            Intentos: {{ intentos }}
+                
         </div>
     </body>
     </html>
