@@ -21,3 +21,31 @@ El juego da pistas si el número ingresado es **mayor o menor**, guarda la sesi�
 - Librerías externas:
   ```bash
   Flask
+
+# ⚙️ Instalación y ejecución
+
+## Clona este repositorio:
+
+git clone https://github.com/royarv/guess_number.git
+
+
+## Entra al directorio del proyecto:
+
+cd guess_number
+
+
+## Activa el entorno virtual (en tu caso):
+
+source venv/bin/activate
+
+## Ejecuta la aplicación:
+
+python3 app.py
+
+
+## Copia la dirección que aparece en la terminal, por ejemplo:
+
+* Running on http://127.0.0.1:5000
+
+
+## Pega esa dirección en tu navegador para iniciar el juego 🎮
